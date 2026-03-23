@@ -1,0 +1,48 @@
+<%
+  const topbarCurrentUser = typeof currentUser !== "undefined" ? currentUser : null;
+  const topbarFlash = typeof flash !== "undefined" ? flash : null;
+  const topbarCsrfToken = typeof csrfToken !== "undefined" ? csrfToken : "";
+  const topbarNotice = typeof notice !== "undefined" ? notice : null;
+  const topbarLangOptions = Array.isArray(langOptions) ? langOptions : [];
+%>
+<div class="topbar">
+  <div class="brand"><a href="/"><%= t("topbar.brand") %></a></div>
+  <div class="topbar-actions">
+    <% if (topbarCurrentUser) { %>
+      <span class="user-pill">
+        <%= topbarCurrentUser.login %>
+        [<%= typeof formatUserRole === "function" ? formatUserRole(topbarCurrentUser.role) : (topbarCurrentUser.role === "ADMIN" ? t("roles.admin") : t("roles.user")) %>]
+      </span>
+      <% if (topbarCurrentUser.role === "ADMIN") { %>
+        <a class="tiny-link" href="/admin"><%= t("topbar.admin") %></a>
+      <% } %>
+    <% } %>
+
+    <div class="lang-switch" aria-label="<%= t("topbar.languageLabel") %>">
+      <span class="lang-switch-label"><%= t("topbar.languageLabel") %>:</span>
+      <% topbarLangOptions.forEach((option) => { %>
+        <a
+          class="tiny-link lang-link <%= option.active ? "active" : "" %>"
+          href="<%= option.url %>"
+          hreflang="<%= option.code %>"
+          title="<%= option.label %>"
+        ><%= option.code.toUpperCase() %></a>
+      <% }) %>
+    </div>
+
+    <% if (topbarCurrentUser) { %>
+      <form method="post" action="/logout" class="inline-form">
+        <input type="hidden" name="_csrf" value="<%= topbarCsrfToken %>" />
+        <button class="tiny-btn" type="submit"><%= t("topbar.logout") %></button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<% if (topbarFlash) { %>
+  <div class="flash <%= topbarFlash.type %>"><%= topbarFlash.message %></div>
+<% } %>
+
+<% if (topbarNotice && topbarNotice.text) { %>
+  <div class="site-notice"><strong><%= t("topbar.noticePrefix") %>:</strong> <%= topbarNotice.text %></div>
+<% } %>

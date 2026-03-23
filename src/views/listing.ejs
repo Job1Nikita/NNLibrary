@@ -1,0 +1,354 @@
+<%- include("partials/head", { title }) %>
+
+<main class="shell">
+  <%- include("partials/topbar", { notice }) %>
+
+  <section class="warning-box">
+    <span class="warn-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+        <path fill="currentColor" d="M12 3L1.7 20.8c-.5.9.2 2.2 1.3 2.2h18c1.1 0 1.8-1.3 1.3-2.2L12 3zm0 5.5c.6 0 1 .4 1 1v5.2c0 .6-.4 1-1 1s-1-.4-1-1V9.5c0-.6.4-1 1-1zm0 10.2a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4z"/>
+      </svg>
+    </span>
+    <span><strong><%= t("listing.warningTitle") %>:</strong> <%= t("listing.warningText") %></span>
+  </section>
+
+  <section class="card listing-card listing-window">
+    <div class="titlebar">
+      <div class="titlebar-title"><%= t("listing.windowTitle") %></div>
+      <div class="titlebar-actions">
+        <a class="titlebar-btn" href="/" title="<%= t("listing.root") %>" aria-label="<%= t("listing.root") %>">
+          <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+            <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+          </svg>
+        </a>
+        <% if (currentDirectory) { %>
+          <a class="titlebar-btn" href="<%= parentDirectoryId === null ? "/" : ("/dir/" + parentDirectoryId) %>" title="<%= t("listing.up") %>" aria-label="<%= t("listing.up") %>">
+            <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+              <path fill="currentColor" d="M4 16l8-8 8 8-1.4 1.4L12 10.8l-6.6 6.6L4 16z"/>
+            </svg>
+          </a>
+        <% } %>
+      </div>
+    </div>
+
+    <% const returnTo = currentDirectory ? ("/dir/" + currentDirectory.id) : "/"; %>
+    <h1 class="listing-path" aria-label="breadcrumb">
+      <span class="listing-path-label"><%= t("listing.content") %></span>
+      <span class="listing-path-crumbs">
+        <% if (breadcrumbs && breadcrumbs.length) { %>
+          <% for (let i = 0; i < breadcrumbs.length; i += 1) { %>
+            <% const crumb = breadcrumbs[i]; %>
+            <% if (i > 0) { %><span class="crumb-sep">/</span><% } %>
+            <% if (crumb.id === null) { %>
+              <a href="/"><%= t("listing.root") %></a>
+            <% } else { %>
+              <a href="/dir/<%= crumb.id %>"><%= crumb.name %></a>
+            <% } %>
+          <% } %>
+        <% } else { %>
+          <a href="/"><%= t("listing.root") %></a>
+        <% } %>
+      </span>
+    </h1>
+
+    <% if (isAdmin) { %>
+      <section class="admin-quickbar">
+        <form method="post" action="/admin/directories" class="admin-create-form admin-tool">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+          <input type="hidden" name="parentId" value="<%= currentDirectory ? currentDirectory.id : "" %>" />
+          <p class="admin-tool-title"><%= t("listing.newFolder") %></p>
+          <div class="form-row create-grid">
+            <input class="control" type="text" name="name" maxlength="120" required placeholder="<%= t("listing.newFolderPlaceholder") %>" />
+            <button class="tiny-btn control-btn" type="submit"><%= t("listing.createFolder") %></button>
+          </div>
+        </form>
+        <form
+          method="post"
+          action="/admin/files/upload?_csrf=<%= encodeURIComponent(csrfToken) %>"
+          enctype="multipart/form-data"
+          class="admin-upload-form admin-tool"
+          data-upload-progress
+          data-drop-upload
+          data-i18n-upload-preparing="<%= t("js.upload.preparing") %>"
+          data-i18n-upload-preparing-send="<%= t("js.upload.preparingSend") %>"
+          data-i18n-upload-uploading="<%= t("js.upload.uploading") %>"
+          data-i18n-upload-uploading-unknown="<%= t("js.upload.uploadingUnknown") %>"
+          data-i18n-upload-uploaded-waiting="<%= t("js.upload.uploadedWaiting") %>"
+          data-i18n-upload-done-redirect="<%= t("js.upload.doneRedirect") %>"
+          data-i18n-upload-network-error="<%= t("js.upload.networkError") %>"
+          data-i18n-upload-timeout="<%= t("js.upload.timeout") %>"
+          data-i18n-upload-server-error="<%= t("js.upload.serverError") %>"
+          data-i18n-upload-less-than-second="<%= t("js.upload.lessThanSecond") %>"
+          data-i18n-dnd-unsupported="<%= t("js.dnd.unsupported") %>"
+          data-i18n-dnd-set-file-error="<%= t("js.dnd.setFileError") %>"
+        >
+          <input type="hidden" name="directoryId" value="<%= currentDirectory ? currentDirectory.id : "" %>" />
+          <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+          <p class="admin-tool-title"><%= t("listing.uploadTitle") %></p>
+          <div class="upload-dropzone" data-upload-dropzone tabindex="0" role="button" aria-label="<%= t("listing.dropzoneAria") %>">
+            <%= t("listing.dropzone") %>
+          </div>
+          <div class="form-row upload-grid">
+            <div class="file-control control" data-file-control data-i18n-file-none="<%= t("js.fileInput.none") %>" data-i18n-file-many="<%= t("js.fileInput.many") %>">
+              <input id="quick-upload-file" class="file-control-input" type="file" name="binaryFile" multiple required />
+              <label for="quick-upload-file" class="file-control-button"><%= t("listing.chooseFiles") %></label>
+              <span class="file-control-name" data-file-name><%= t("listing.filesNotSelected") %></span>
+            </div>
+            <input class="control" type="text" name="storageSubdir" maxlength="512" placeholder="<%= t("listing.storageSubdirPlaceholder") %>" />
+            <button class="tiny-btn control-btn upload-submit-btn" type="submit" data-upload-submit><%= t("listing.uploadFile") %></button>
+          </div>
+          <div class="form-row upload-meta-row">
+            <label class="admin-inline-check">
+              <input type="checkbox" name="overwrite" />
+              <%= t("listing.overwrite") %>
+            </label>
+          </div>
+          <div class="upload-progress" data-upload-progress-ui hidden>
+            <div class="upload-progress-head">
+              <strong data-progress-percent>0%</strong>
+              <span class="muted" data-progress-meta><%= t("js.upload.preparing") %></span>
+              <button
+                type="button"
+                class="tiny-btn upload-progress-cancel"
+                data-upload-cancel
+                title="<%= t("listing.cancelUpload") %>"
+                aria-label="<%= t("listing.cancelUpload") %>"
+                hidden
+              >✕</button>
+            </div>
+            <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="upload-progress-bar" data-progress-bar></div>
+            </div>
+          </div>
+        </form>
+      </section>
+    <% } %>
+
+    <div class="listing-scroll">
+      <table class="listing-table">
+        <thead>
+          <tr>
+            <th class="col-name"><%= t("listing.table.name") %></th>
+            <th class="col-type"><%= t("listing.table.type") %></th>
+            <th class="col-sha">
+              SHA256
+              <button type="button" class="checksum-help-open" data-checksum-help-open="checksum-help-listing" aria-label="<%= t("checksumHelp.open") %>" title="<%= t("checksumHelp.open") %>">?</button>
+            </th>
+            <th class="col-md5">
+              MD5
+              <button type="button" class="checksum-help-open" data-checksum-help-open="checksum-help-listing" aria-label="<%= t("checksumHelp.open") %>" title="<%= t("checksumHelp.open") %>">?</button>
+            </th>
+            <th class="col-uploaded"><%= t("listing.table.uploaded") %></th>
+            <th class="col-size"><%= t("listing.table.size") %></th>
+            <th class="col-modified"><%= t("listing.table.modified") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (currentDirectory && parentDirectoryId !== null) { %>
+            <tr>
+              <td class="name-cell">
+                <a class="entry-link" href="/dir/<%= parentDirectoryId %>" title="<%= t("listing.parentDir") %>">
+                  <span class="entry-name" title="<%= t("listing.parentDir") %>">../ <%= t("listing.parentDir") %></span>
+                </a>
+              </td>
+              <td class="type-cell">DIR</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+          <% } else if (currentDirectory && parentDirectoryId === null) { %>
+            <tr>
+              <td class="name-cell">
+                <a class="entry-link" href="/" title="<%= t("listing.parentCatalog") %>">
+                  <span class="entry-name" title="<%= t("listing.parentCatalog") %>">../ <%= t("listing.parentCatalog") %></span>
+                </a>
+              </td>
+              <td class="type-cell">DIR</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+          <% } %>
+
+          <% directories.forEach((directory) => { %>
+            <tr>
+              <td class="name-cell">
+                <div class="name-main">
+                  <a
+                    class="entry-link <%= isAdmin ? "entry-link-admin" : "" %>"
+                    href="/dir/<%= directory.id %>"
+                    title="<%= directory.name %>/"
+                    <% if (isAdmin) { %>
+                      data-entry-target="directory"
+                      data-id="<%= directory.id %>"
+                      data-name="<%= directory.name %>"
+                      data-parent-id="<%= currentDirectory ? currentDirectory.id : "" %>"
+                    <% } %>
+                  >
+                    <span class="entry-icon" aria-hidden="true">📁</span>
+                    <span class="entry-name" title="<%= directory.name %>/"><%= directory.name %>/</span>
+                  </a>
+                  <% if (directory.isHidden) { %><span class="muted"><%= t("listing.hiddenDir") %></span><% } %>
+                </div>
+              </td>
+              <td class="type-cell">DIR</td>
+              <td>-</td>
+              <td>-</td>
+              <td><%= formatDate(directory.updatedAt) %></td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+          <% }) %>
+
+          <% files.forEach((file) => { %>
+            <tr class="<%= file.isFeatured ? "featured-row" : "" %>">
+              <td class="name-cell">
+                <div class="name-main">
+                  <a
+                    class="entry-link <%= isAdmin ? "entry-link-admin" : "" %>"
+                    href="/file/<%= file.id %>"
+                    title="<%= file.name %>"
+                    <% if (isAdmin) { %>
+                      data-entry-target="file"
+                      data-id="<%= file.id %>"
+                      data-name="<%= file.name %>"
+                      data-directory-id="<%= currentDirectory ? currentDirectory.id : "" %>"
+                      data-featured="<%= file.isFeatured ? "true" : "false" %>"
+                    <% } %>
+                  >
+                    <span class="entry-icon" aria-hidden="true">📄</span>
+                    <span class="entry-name" title="<%= file.name %>"><%= file.name %></span>
+                  </a>
+                  <% if (file.isFeatured) { %><span class="file-feature-badge"><%= t("listing.featured") %></span><% } %>
+                  <% if (file.isHidden) { %><span class="muted"><%= t("listing.hiddenFile") %></span><% } %>
+                </div>
+              </td>
+              <td class="type-cell"><%= file.extension || "-" %></td>
+              <td>
+                <div class="hash-cell">
+                  <code class="hash-code" title="<%= file.sha256 %>"><%= file.sha256 %></code>
+                  <button type="button" class="copy-btn" data-copy="<%= file.sha256 %>" aria-label="<%= t("listing.copySha") %>" title="<%= t("listing.copySha") %>">
+                    <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+                      <path fill="currentColor" d="M8 8V5c0-1.1.9-2 2-2h9v12h-3V5h-6v3H8zm-5 2h11c1.1 0 2 .9 2 2v9H5c-1.1 0-2-.9-2-2v-9zm2 2v7h9v-7H5z"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <div class="hash-cell">
+                  <code class="hash-code" title="<%= file.md5 %>"><%= file.md5 %></code>
+                  <button type="button" class="copy-btn" data-copy="<%= file.md5 %>" aria-label="<%= t("listing.copyMd5") %>" title="<%= t("listing.copyMd5") %>">
+                    <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+                      <path fill="currentColor" d="M8 8V5c0-1.1.9-2 2-2h9v12h-3V5h-6v3H8zm-5 2h11c1.1 0 2 .9 2 2v9H5c-1.1 0-2-.9-2-2v-9zm2 2v7h9v-7H5z"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+              <td><%= formatDate(file.uploadAt) %></td>
+              <td><%= formatSize(file.size) %></td>
+              <td><%= formatDate(file.lastModified) %></td>
+            </tr>
+          <% }) %>
+
+          <% if (directories.length === 0 && files.length === 0) { %>
+            <tr>
+              <td colspan="7" class="muted"><%= t("listing.emptyDir") %></td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<% if (isAdmin) { %>
+  <form id="admin-rename-dir-form" class="hidden-admin-form" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+    <input type="hidden" name="name" />
+  </form>
+  <form id="admin-move-dir-form" class="hidden-admin-form" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+    <input type="hidden" name="parentId" />
+  </form>
+  <form id="admin-delete-dir-form" class="hidden-admin-form" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+  </form>
+  <form id="admin-rename-file-form" class="hidden-admin-form" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+    <input type="hidden" name="name" />
+  </form>
+  <form id="admin-move-file-form" class="hidden-admin-form" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+    <input type="hidden" name="directoryId" />
+  </form>
+  <form id="admin-feature-file-form" class="hidden-admin-form" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+    <input type="hidden" name="isFeatured" />
+  </form>
+  <form id="admin-delete-file-form" class="hidden-admin-form" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+  </form>
+  <div id="entry-context-menu" class="entry-context-menu" hidden>
+    <div class="entry-context-title" data-menu-title><%= t("listing.context.actions") %></div>
+    <button type="button" class="context-item success" data-cm-action="toggle-featured" data-cm-feature-text-default="<%= t("listing.context.markFeatured") %>" data-cm-feature-text-remove="<%= t("listing.context.unmarkFeatured") %>"><%= t("listing.context.markFeatured") %></button>
+    <button type="button" class="context-item" data-cm-action="rename"><%= t("listing.context.rename") %></button>
+    <button type="button" class="context-item" data-cm-action="move"><%= t("listing.context.move") %></button>
+    <button type="button" class="context-item danger" data-cm-action="delete"><%= t("listing.context.delete") %></button>
+  </div>
+  <div id="move-picker-modal" class="move-modal" hidden>
+    <div class="move-modal-backdrop" data-move-close></div>
+    <div class="move-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="move-modal-title">
+      <h3 id="move-modal-title" class="move-modal-title"><%= t("listing.moveModal.title") %></h3>
+      <p class="move-modal-subtitle">
+        <%= t("listing.moveModal.selected") %>:
+        <strong id="move-entry-label">-</strong>
+      </p>
+      <div class="move-root-row">
+        <button type="button" class="tiny-btn move-root-btn" data-move-root><%= t("listing.moveModal.root") %></button>
+      </div>
+      <div id="move-directory-list" class="move-directory-list" role="listbox" aria-label="<%= t("listing.moveModal.aria") %>"></div>
+      <div class="move-modal-actions">
+        <button type="button" class="tiny-btn" data-move-cancel><%= t("listing.moveModal.cancel") %></button>
+        <button type="button" class="btn" data-move-submit><%= t("listing.moveModal.submit") %></button>
+      </div>
+    </div>
+  </div>
+  <script id="move-directories-data" type="application/json"><%- JSON.stringify(moveDirectories || []).replace(/</g, "\\u003c") %></script>
+  <div
+    id="admin-actions-i18n"
+    hidden
+    data-dir-prefix="<%= t("js.adminActions.dirPrefix") %>"
+    data-file-prefix="<%= t("js.adminActions.filePrefix") %>"
+    data-no-dirs="<%= t("js.adminActions.noDirs") %>"
+    data-entry-dir="<%= t("js.adminActions.entryDir") %>"
+    data-entry-file="<%= t("js.adminActions.entryFile") %>"
+    data-prompt-dir-rename="<%= t("js.adminActions.promptDirRename") %>"
+    data-prompt-file-rename="<%= t("js.adminActions.promptFileRename") %>"
+    data-confirm-dir-delete="<%= t("js.adminActions.confirmDirDelete") %>"
+    data-confirm-file-delete="<%= t("js.adminActions.confirmFileDelete") %>"
+  ></div>
+<% } %>
+
+<%- include("partials/checksum-help", { checksumHelpId: "checksum-help-listing" }) %>
+
+<script src="/public/js/hash-copy.js" defer></script>
+<script src="/public/js/checksum-help.js" defer></script>
+<% if (isAdmin) { %>
+  <script src="/public/js/admin-actions.js" defer></script>
+  <script src="/public/js/file-input-control.js" defer></script>
+  <script src="/public/js/admin-upload-progress.js?v=20260306-2" defer></script>
+  <script src="/public/js/listing-dnd-upload.js?v=20260306-1" defer></script>
+<% } %>
+<%- include("partials/foot") %>

@@ -1,0 +1,32 @@
+node_modules/
+dist/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local databases and sqlite journals
+prisma/*.db
+prisma/*.db-*
+*.db-journal
+
+# Temp/runtime artifacts
+tmp/
+logs/
+*.log
+
+# Package manager debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE/OS
+.DS_Store
+.vscode/
+.idea/
+*.code-workspace
+
+# Test/coverage
+coverage/

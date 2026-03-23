@@ -1,0 +1,13 @@
+<%- include("partials/head", { title }) %>
+
+<main class="shell">
+  <%- include("partials/topbar", { notice: null, flash: null, currentUser: null, csrfToken: "" }) %>
+
+  <section class="card">
+    <h1><%= t("errorPage.title", { code }) %></h1>
+    <p><%= message %></p>
+    <p><a href="/"><%= t("errorPage.backToRoot") %></a></p>
+  </section>
+</main>
+
+<%- include("partials/foot") %>

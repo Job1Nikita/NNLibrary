@@ -1,0 +1,89 @@
+<%
+  const checksumHelpModalId = typeof checksumHelpId === "string" && checksumHelpId.length > 0
+    ? checksumHelpId
+    : "checksum-help-modal";
+  const checksumHelpExpectedSha = typeof checksumHelpSha === "string" ? checksumHelpSha : "";
+  const checksumHelpExpectedMd5 = typeof checksumHelpMd5 === "string" ? checksumHelpMd5 : "";
+  const checksumHelpHasExpected = Boolean(checksumHelpExpectedSha || checksumHelpExpectedMd5);
+%>
+
+<div id="<%= checksumHelpModalId %>" class="checksum-help-modal" hidden>
+  <div class="checksum-help-backdrop" data-checksum-help-close></div>
+  <div class="checksum-help-dialog" role="dialog" aria-modal="true" aria-labelledby="<%= checksumHelpModalId %>-title">
+    <h3 id="<%= checksumHelpModalId %>-title" class="checksum-help-title"><%= t("checksumHelp.title") %></h3>
+    <p class="muted checksum-help-intro"><%= t("checksumHelp.intro") %></p>
+
+    <% if (checksumHelpHasExpected) { %>
+      <div class="checksum-help-expected">
+        <% if (checksumHelpExpectedSha) { %>
+          <div class="checksum-help-row">
+            <span class="checksum-help-label"><%= t("checksumHelp.expectedSha") %></span>
+            <code class="checksum-help-value" title="<%= checksumHelpExpectedSha %>"><%= checksumHelpExpectedSha %></code>
+            <button
+              type="button"
+              class="tiny-btn"
+              data-copy-text="<%= checksumHelpExpectedSha %>"
+              data-copy-label="<%= t("checksumHelp.copy") %>"
+              data-copy-done="<%= t("checksumHelp.copied") %>"
+            ><%= t("checksumHelp.copy") %></button>
+          </div>
+        <% } %>
+        <% if (checksumHelpExpectedMd5) { %>
+          <div class="checksum-help-row">
+            <span class="checksum-help-label"><%= t("checksumHelp.expectedMd5") %></span>
+            <code class="checksum-help-value" title="<%= checksumHelpExpectedMd5 %>"><%= checksumHelpExpectedMd5 %></code>
+            <button
+              type="button"
+              class="tiny-btn"
+              data-copy-text="<%= checksumHelpExpectedMd5 %>"
+              data-copy-label="<%= t("checksumHelp.copy") %>"
+              data-copy-done="<%= t("checksumHelp.copied") %>"
+            ><%= t("checksumHelp.copy") %></button>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="checksum-help-block">
+      <h4><%= t("checksumHelp.windowsTitle") %></h4>
+      <div class="checksum-help-cmd">
+        <code>Get-FileHash -Algorithm SHA256 "C:\Path\To\File.iso"</code>
+        <button type="button" class="tiny-btn" data-copy-code data-copy-label="<%= t("checksumHelp.copy") %>" data-copy-done="<%= t("checksumHelp.copied") %>"><%= t("checksumHelp.copy") %></button>
+      </div>
+      <div class="checksum-help-cmd">
+        <code>Get-FileHash -Algorithm MD5 "C:\Path\To\File.iso"</code>
+        <button type="button" class="tiny-btn" data-copy-code data-copy-label="<%= t("checksumHelp.copy") %>" data-copy-done="<%= t("checksumHelp.copied") %>"><%= t("checksumHelp.copy") %></button>
+      </div>
+    </div>
+
+    <div class="checksum-help-block">
+      <h4><%= t("checksumHelp.linuxTitle") %></h4>
+      <div class="checksum-help-cmd">
+        <code>sha256sum "/path/to/file.iso"</code>
+        <button type="button" class="tiny-btn" data-copy-code data-copy-label="<%= t("checksumHelp.copy") %>" data-copy-done="<%= t("checksumHelp.copied") %>"><%= t("checksumHelp.copy") %></button>
+      </div>
+      <div class="checksum-help-cmd">
+        <code>md5sum "/path/to/file.iso"</code>
+        <button type="button" class="tiny-btn" data-copy-code data-copy-label="<%= t("checksumHelp.copy") %>" data-copy-done="<%= t("checksumHelp.copied") %>"><%= t("checksumHelp.copy") %></button>
+      </div>
+    </div>
+
+    <div class="checksum-help-block">
+      <h4><%= t("checksumHelp.macosTitle") %></h4>
+      <div class="checksum-help-cmd">
+        <code>shasum -a 256 "/path/to/file.iso"</code>
+        <button type="button" class="tiny-btn" data-copy-code data-copy-label="<%= t("checksumHelp.copy") %>" data-copy-done="<%= t("checksumHelp.copied") %>"><%= t("checksumHelp.copy") %></button>
+      </div>
+      <div class="checksum-help-cmd">
+        <code>md5 "/path/to/file.iso"</code>
+        <button type="button" class="tiny-btn" data-copy-code data-copy-label="<%= t("checksumHelp.copy") %>" data-copy-done="<%= t("checksumHelp.copied") %>"><%= t("checksumHelp.copy") %></button>
+      </div>
+    </div>
+
+    <p class="checksum-help-note muted"><%= t("checksumHelp.note") %></p>
+
+    <div class="checksum-help-actions">
+      <button type="button" class="tiny-btn" data-checksum-help-close><%= t("checksumHelp.close") %></button>
+    </div>
+  </div>
+</div>

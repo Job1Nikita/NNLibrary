@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+# Keep critical project files in LF to avoid parser issues
+*.ts text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.prisma text eol=lf
+*.ejs text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

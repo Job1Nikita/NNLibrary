@@ -1,0 +1,61 @@
+<%- include("partials/head", { title }) %>
+
+<main class="shell">
+  <%- include("partials/topbar", { notice }) %>
+
+  <section class="card file-card">
+    <a class="tiny-btn file-back-btn" href="<%= file.directory ? ("/dir/" + file.directory.id) : "/" %>">← <%= t("file.back") %></a>
+    <h1>
+      <%= t("file.titlePrefix") %>: <%= file.name %>
+      <button type="button" class="checksum-help-open" data-checksum-help-open="checksum-help-file" aria-label="<%= t("checksumHelp.open") %>" title="<%= t("checksumHelp.open") %>">?</button>
+    </h1>
+    <% if (file.isFeatured) { %>
+      <p><span class="file-feature-badge"><%= t("file.featured") %></span></p>
+    <% } %>
+    <p class="muted">
+      <%= t("file.directory") %>:
+      <% if (file.directory) { %>
+        <a href="/dir/<%= file.directory.id %>"><%= file.directory.name %></a>
+      <% } else { %>
+        <a href="/"><%= t("file.root") %></a>
+      <% } %>
+    </p>
+
+    <table class="meta-table">
+      <tr><th><%= t("file.meta.extension") %></th><td><%= file.extension || "-" %></td></tr>
+      <tr><th>SHA256</th><td><code><%= file.sha256 %></code></td></tr>
+      <tr><th>MD5</th><td><code><%= file.md5 %></code></td></tr>
+      <tr><th><%= t("file.meta.uploaded") %></th><td><%= formatDate(file.uploadAt) %></td></tr>
+      <tr><th><%= t("file.meta.size") %></th><td><%= formatSize(file.size) %></td></tr>
+      <tr><th><%= t("file.meta.modified") %></th><td><%= formatDate(file.lastModified) %></td></tr>
+      <tr><th><%= t("file.meta.storagePath") %></th><td><code><%= file.relativePath %></code></td></tr>
+    </table>
+
+    <p><a class="btn" href="/download/<%= file.id %>"><%= t("file.download") %></a></p>
+  </section>
+
+  <section class="card">
+    <h2><%= t("file.comments") %></h2>
+    <form method="post" action="/file/<%= file.id %>/comment" class="stack-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <textarea name="content" rows="4" maxlength="1200" required placeholder="<%= t("file.commentPlaceholder") %>"></textarea>
+      <button class="btn" type="submit"><%= t("file.sendComment") %></button>
+    </form>
+
+    <div class="comments">
+      <% if (file.comments.length === 0) { %>
+        <p class="muted"><%= t("file.noComments") %></p>
+      <% } %>
+      <% file.comments.forEach((comment) => { %>
+        <article class="comment-item">
+          <header><strong><%= comment.user.login %></strong> · <%= formatDate(comment.createdAt) %></header>
+          <p><%= comment.content %></p>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</main>
+
+<%- include("partials/checksum-help", { checksumHelpId: "checksum-help-file", checksumHelpSha: file.sha256, checksumHelpMd5: file.md5 }) %>
+<script src="/public/js/checksum-help.js" defer></script>
+<%- include("partials/foot") %>

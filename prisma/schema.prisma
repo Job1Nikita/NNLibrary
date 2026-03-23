@@ -1,0 +1,153 @@
+﻿generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  BLOCKED
+}
+
+model User {
+  id              Int          @id @default(autoincrement())
+  login           String       @unique
+  passwordHash    String
+  role            UserRole     @default(USER)
+  status          UserStatus   @default(PENDING)
+  registrationIp  String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  approvedAt      DateTime?
+  blockedAt       DateTime?
+
+  comments        Comment[]
+  downloadLogs    DownloadLog[]
+  visitLogs       VisitLog[]
+  noticesCreated  SiteNotice[] @relation("SiteNoticeCreator")
+  auditActions    AuditLog[]   @relation("AuditActor")
+  auditTargets    AuditLog[]   @relation("AuditTarget")
+}
+
+model Session {
+  id         Int      @id @default(autoincrement())
+  sid        String   @unique
+  data       String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Directory {
+  id         Int         @id @default(autoincrement())
+  name       String
+  isHidden   Boolean     @default(false)
+  parentId   Int?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  parent     Directory?  @relation("DirTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children   Directory[] @relation("DirTree")
+  files      File[]
+
+  @@unique([parentId, name])
+}
+
+model File {
+  id            Int         @id @default(autoincrement())
+  directoryId   Int?
+  name          String
+  extension     String
+  relativePath  String      @unique
+  sha256        String
+  md5           String
+  uploadAt      DateTime    @default(now())
+  size          BigInt?
+  lastModified  DateTime?
+  isHidden      Boolean     @default(false)
+  isFeatured    Boolean     @default(false)
+
+  directory     Directory?  @relation(fields: [directoryId], references: [id], onDelete: SetNull)
+  comments      Comment[]
+  downloadLogs  DownloadLog[]
+
+  @@index([directoryId])
+  @@index([name])
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  fileId      Int
+  userId      Int
+  content     String
+  createdAt   DateTime @default(now())
+
+  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([fileId, createdAt])
+}
+
+model DownloadLog {
+  id           Int      @id @default(autoincrement())
+  userId        Int
+  fileId        Int
+  ip            String?
+  userAgent     String?
+  downloadedAt  DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file          File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([downloadedAt])
+}
+
+model VisitLog {
+  id         Int      @id @default(autoincrement())
+  userId      Int?
+  path        String
+  ip          String?
+  userAgent   String?
+  visitedAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([visitedAt])
+}
+
+model SiteNotice {
+  id           Int      @id @default(autoincrement())
+  text         String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  createdById  Int?
+
+  createdBy    User?    @relation("SiteNoticeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([isActive, createdAt])
+}
+
+model AuditLog {
+  id            Int      @id @default(autoincrement())
+  actorId       Int?
+  targetUserId  Int?
+  action        String
+  details       String?
+  ip            String?
+  createdAt     DateTime @default(now())
+
+  actor         User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  targetUser    User?    @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+}
+

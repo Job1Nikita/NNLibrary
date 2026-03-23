@@ -1,0 +1,273 @@
+<%- include("../partials/head", { title }) %>
+
+<main class="shell admin-shell">
+  <%- include("../partials/topbar", { notice: null }) %>
+
+  <section class="card">
+    <h1><%= t("admin.title") %></h1>
+    <p class="muted"><%= t("admin.pendingCount", { count: pendingCount }) %></p>
+  </section>
+
+  <section class="card">
+    <h2><%= t("admin.siteNoticeTitle") %></h2>
+    <% if (activeNotice) { %>
+      <p><strong><%= t("admin.siteNoticeActiveLabel") %>:</strong> <%= activeNotice.text %></p>
+    <% } else { %>
+      <p class="muted"><%= t("admin.siteNoticeNone") %></p>
+    <% } %>
+    <form method="post" action="/admin/notice" class="stack-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <textarea name="text" rows="3" maxlength="500" required placeholder="<%= t("admin.siteNoticePlaceholder") %>"></textarea>
+      <button class="btn" type="submit"><%= t("admin.siteNoticePublish") %></button>
+    </form>
+    <form method="post" action="/admin/notice/clear" class="inline-form notice-clear-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <button class="tiny-btn" type="submit"><%= t("admin.siteNoticeClear") %></button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2><%= t("admin.usersTitle") %></h2>
+    <table class="listing-table admin-users-table">
+      <thead>
+        <tr>
+          <th><%= t("admin.usersColumns.id") %></th>
+          <th><%= t("admin.usersColumns.login") %></th>
+          <th><%= t("admin.usersColumns.role") %></th>
+          <th><%= t("admin.usersColumns.status") %></th>
+          <th><%= t("admin.usersColumns.ip") %></th>
+          <th class="user-action-col"><%= t("admin.usersColumns.action") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach((user) => { %>
+          <tr>
+            <td><%= user.id %></td>
+            <td><%= user.login %></td>
+            <td><%= typeof formatUserRole === "function" ? formatUserRole(user.role) : user.role %></td>
+            <td><%= typeof formatUserStatus === "function" ? formatUserStatus(user.status) : user.status %></td>
+            <td><%= user.registrationIp || "-" %></td>
+            <td class="user-action-cell">
+              <form method="post" action="/admin/users/<%= user.id %>/action" class="inline-form user-action-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <select name="action" class="user-action-select" required>
+                  <option value="approve"><%= t("admin.userActions.approve") %></option>
+                  <option value="reject"><%= t("admin.userActions.reject") %></option>
+                  <option value="ban"><%= t("admin.userActions.ban") %></option>
+                  <option value="unban"><%= t("admin.userActions.unban") %></option>
+                </select>
+                <button class="tiny-btn" type="submit"><%= t("admin.userActions.apply") %></button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2><%= t("admin.createDirTitle") %></h2>
+    <form method="post" action="/admin/directories" class="stack-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <label>
+        <%= t("admin.dirName") %>
+        <input type="text" name="name" maxlength="120" required />
+      </label>
+      <label>
+        <%= t("admin.dirParent") %>
+        <select name="parentId">
+          <option value=""><%= t("admin.rootOption") %></option>
+          <% directories.forEach((directory) => { %>
+            <option value="<%= directory.id %>"><%= directory.name %> (#<%= directory.id %>)</option>
+          <% }) %>
+        </select>
+      </label>
+      <button class="btn" type="submit"><%= t("admin.createDirSubmit") %></button>
+    </form>
+
+    <h3><%= t("admin.dirsTitle") %></h3>
+    <% const directoryNameById = Object.fromEntries(directories.map((item) => [String(item.id), item.name])); %>
+    <table class="listing-table">
+      <thead>
+        <tr>
+          <th><%= t("admin.dirsColumns.id") %></th>
+          <th><%= t("admin.dirsColumns.parent") %></th>
+          <th><%= t("admin.dirsColumns.edit") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% directories.forEach((directory) => { %>
+          <% const parentName = directory.parentId === null ? t("admin.rootOption") : (directoryNameById[String(directory.parentId)] || t("admin.dirParentMissing")); %>
+          <tr>
+            <td title="<%= t("admin.dirIdTitle") %>">#<%= directory.id %></td>
+            <td title="<%= directory.parentId === null ? t("admin.dirParentRootTitle") : t("admin.dirParentIdTitle", { id: directory.parentId }) %>">
+              <%= parentName %>
+              <% if (directory.parentId !== null) { %>
+                <span class="muted">(#<%= directory.parentId %>)</span>
+              <% } %>
+            </td>
+            <td>
+              <form method="post" action="/admin/directories/<%= directory.id %>" class="inline-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <input type="text" name="name" value="<%= directory.name %>" maxlength="120" required />
+                <select name="isHidden">
+                  <option value="false" <%= !directory.isHidden ? "selected" : "" %>><%= t("admin.dirVisible") %></option>
+                  <option value="true" <%= directory.isHidden ? "selected" : "" %>><%= t("admin.dirHidden") %></option>
+                </select>
+                <button class="tiny-btn" type="submit"><%= t("admin.save") %></button>
+              </form>
+              <form
+                method="post"
+                action="/admin/directories/<%= directory.id %>/delete"
+                class="inline-form"
+                onsubmit="return confirm('<%= t("admin.deleteDirConfirm") %>');"
+              >
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <button class="tiny-btn" type="submit"><%= t("admin.delete") %></button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2><%= t("admin.uploadTitle") %></h2>
+    <p class="muted"><%= t("admin.uploadLead") %></p>
+    <form
+      id="admin-upload-form"
+      method="post"
+      action="/admin/files/upload?_csrf=<%= encodeURIComponent(csrfToken) %>"
+      enctype="multipart/form-data"
+      class="stack-form"
+      data-upload-progress
+      data-i18n-upload-preparing="<%= t("js.upload.preparing") %>"
+      data-i18n-upload-preparing-send="<%= t("js.upload.preparingSend") %>"
+      data-i18n-upload-uploading="<%= t("js.upload.uploading") %>"
+      data-i18n-upload-uploading-unknown="<%= t("js.upload.uploadingUnknown") %>"
+      data-i18n-upload-uploaded-waiting="<%= t("js.upload.uploadedWaiting") %>"
+      data-i18n-upload-done-redirect="<%= t("js.upload.doneRedirect") %>"
+      data-i18n-upload-network-error="<%= t("js.upload.networkError") %>"
+      data-i18n-upload-timeout="<%= t("js.upload.timeout") %>"
+      data-i18n-upload-server-error="<%= t("js.upload.serverError") %>"
+      data-i18n-upload-less-than-second="<%= t("js.upload.lessThanSecond") %>"
+    >
+      <label>
+        <%= t("admin.uploadFileLabel") %>
+        <input type="file" name="binaryFile" multiple required />
+      </label>
+      <label>
+        <%= t("admin.uploadStorageSubdir") %>
+        <input type="text" name="storageSubdir" maxlength="512" placeholder="isos/windows" />
+      </label>
+      <label>
+        <%= t("admin.uploadVisibleName") %>
+        <input type="text" name="visibleName" maxlength="255" placeholder="win11_23h2.iso" />
+      </label>
+      <label>
+        <%= t("admin.uploadDirectory") %>
+        <select name="directoryId">
+          <option value=""><%= t("admin.rootOption") %></option>
+          <% directories.forEach((directory) => { %>
+            <option value="<%= directory.id %>"><%= directory.name %> (#<%= directory.id %>)</option>
+          <% }) %>
+        </select>
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" name="overwrite" />
+        <%= t("admin.uploadOverwrite") %>
+      </label>
+      <button class="btn" type="submit" data-upload-submit><%= t("admin.uploadSubmit") %></button>
+      <div class="upload-progress" data-upload-progress-ui hidden>
+        <div class="upload-progress-head">
+          <strong data-progress-percent>0%</strong>
+          <span class="muted" data-progress-meta><%= t("js.upload.preparing") %></span>
+          <button
+            type="button"
+            class="tiny-btn upload-progress-cancel"
+            data-upload-cancel
+            title="<%= t("listing.cancelUpload") %>"
+            aria-label="<%= t("listing.cancelUpload") %>"
+            hidden
+          >✕</button>
+        </div>
+        <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="upload-progress-bar" data-progress-bar></div>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2><%= t("admin.registerTitle") %></h2>
+    <form method="post" action="/admin/files/register" class="stack-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <label>
+        <%= t("admin.registerPath") %>
+        <input type="text" name="relativePath" placeholder="subdir/archive.zip" maxlength="1024" required />
+      </label>
+      <label>
+        <%= t("admin.registerVisibleName") %>
+        <input type="text" name="visibleName" maxlength="255" />
+      </label>
+      <label>
+        <%= t("admin.registerDirectory") %>
+        <select name="directoryId">
+          <option value=""><%= t("admin.rootOption") %></option>
+          <% directories.forEach((directory) => { %>
+            <option value="<%= directory.id %>"><%= directory.name %> (#<%= directory.id %>)</option>
+          <% }) %>
+        </select>
+      </label>
+      <button class="btn" type="submit"><%= t("admin.registerSubmit") %></button>
+    </form>
+
+    <h3><%= t("admin.recentFilesTitle") %></h3>
+    <table class="listing-table admin-files-table">
+      <thead>
+        <tr>
+          <th class="file-col-id"><%= t("admin.recentFilesColumns.id") %></th>
+          <th class="file-col-name"><%= t("admin.recentFilesColumns.name") %></th>
+          <th class="file-col-dir"><%= t("admin.recentFilesColumns.directory") %></th>
+          <th class="file-col-path"><%= t("admin.recentFilesColumns.path") %></th>
+          <th class="file-col-date"><%= t("admin.recentFilesColumns.added") %></th>
+          <th class="file-col-action"><%= t("admin.recentFilesColumns.action") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% files.forEach((file) => { %>
+          <tr>
+            <td class="file-id-cell"><%= file.id %></td>
+            <td class="file-name-cell">
+              <span class="file-text-clip" title="<%= file.name %>"><%= file.name %></span>
+            </td>
+            <td class="file-dir-cell">
+              <span class="file-text-clip" title="<%= file.directory ? file.directory.name : t("admin.rootOption") %>">
+                <%= file.directory ? file.directory.name : t("admin.rootOption") %>
+              </span>
+            </td>
+            <td class="file-path-cell">
+              <code class="file-path-code" title="<%= file.relativePath %>"><%= file.relativePath %></code>
+            </td>
+            <td class="file-date-cell"><%= formatDate(file.uploadAt) %></td>
+            <td class="file-action-cell">
+              <form
+                method="post"
+                action="/admin/files/<%= file.id %>/delete"
+                class="inline-form"
+                onsubmit="return confirm('<%= t("admin.deleteFileConfirm") %>');"
+              >
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <button class="tiny-btn" type="submit"><%= t("admin.delete") %></button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script src="/public/js/admin-upload-progress.js?v=20260306-2" defer></script>
+<%- include("../partials/foot") %>

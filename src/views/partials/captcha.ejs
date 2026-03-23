@@ -1,0 +1,21 @@
+<div
+  class="captcha-widget"
+  data-captcha-widget
+  data-i18n-loading="<%= t("captcha.loading") %>"
+  data-i18n-load-error="<%= t("captcha.loadError") %>"
+  data-i18n-hint="<%= t("captcha.hint") %>"
+  data-i18n-not-ready="<%= t("captcha.notReady") %>"
+  data-i18n-not-ready-refresh="<%= t("captcha.notReadyRefresh") %>"
+>
+  <div class="captcha-stage">
+    <canvas class="captcha-bg" width="320" height="160"></canvas>
+    <canvas class="captcha-piece" width="72" height="48"></canvas>
+  </div>
+  <div class="captcha-controls">
+    <input class="captcha-slider" type="range" min="0" max="248" value="0" step="1" />
+    <button class="tiny-btn captcha-refresh" type="button"><%= t("captcha.refresh") %></button>
+  </div>
+  <input class="captcha-challenge-id" type="hidden" name="challengeId" required />
+  <input class="captcha-x" type="hidden" name="captchaX" required />
+  <p class="captcha-hint"><%= t("captcha.hint") %></p>
+</div>

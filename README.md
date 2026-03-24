@@ -256,9 +256,12 @@ npm run scan:storage -- --dir 1
 - `BASE_URL` is reserved for future link generation and integrations.
 - The app binds to `127.0.0.1:3010` for nginx reverse proxy.
 
-## Publishing To GitHub
+## Changelog
 
-Use the step-by-step checklist:
+- `CHANGELOG.md`
 
-- `GITHUB_PUBLISH.md`
+## License
+
+MIT (`LICENSE`)
+
 

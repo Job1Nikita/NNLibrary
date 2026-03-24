@@ -39,6 +39,28 @@ Server-rendered archive portal in classic Apache-style directory listing, with m
   - publish site notice from bot
 - Audit logs for moderation/admin actions.
 
+## Interface Preview
+
+NNLibrary keeps a classic archive-listing style while adding practical admin tooling for daily operations.
+
+### Login page
+
+Secure entry point with credentials + slider captcha challenge.
+
+![NNLibrary Login](docs/images/Sign.png)
+
+### Main portal window
+
+Directory-style listing with checksums, metadata, protected downloads, and inline admin actions.
+
+![NNLibrary Main Window](docs/images/MainWindow.png)
+
+### Admin panel
+
+Centralized moderation and management for users, directories, file records, and site notices.
+
+![NNLibrary Admin Panel](docs/images/AdminPanel.png)
+
 ## Project Structure
 
 - `src/server.ts` - web app
